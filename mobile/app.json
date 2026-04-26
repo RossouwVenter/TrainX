@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "TrainX",
+    "slug": "trainx",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "trainx",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.trainx.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0F4C81"
+      },
+      "package": "com.trainx.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font"
+    ]
+  }
+}

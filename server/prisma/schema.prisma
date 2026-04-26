@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  COACH
+  ATHLETE
+}
+
+enum Discipline {
+  SWIM
+  BIKE
+  RUN
+  STRENGTH
+  FLEXIBILITY
+  REST
+  OTHER
+}
+
+enum SessionStatus {
+  PLANNED
+  COMPLETED
+  SKIPPED
+  MODIFIED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  coachSessions   Session[]  @relation("CoachSessions")
+  athleteSessions Session[]  @relation("AthleteSessions")
+  feedback        Feedback[]
+  comments        Comment[]
+}
+
+model Session {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  discipline  Discipline
+  date        DateTime
+  duration    Int
+  status      SessionStatus @default(PLANNED)
+  order       Int           @default(0)
+
+  coachId   String
+  coach     User @relation("CoachSessions", fields: [coachId], references: [id])
+  athleteId String
+  athlete   User @relation("AthleteSessions", fields: [athleteId], references: [id])
+
+  feedback Feedback?
+  comments Comment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([athleteId, date])
+  @@index([coachId])
+}
+
+model Feedback {
+  id        String  @id @default(uuid())
+  rpe       Int
+  notes     String?
+  completed Boolean @default(true)
+
+  sessionId String  @unique
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  athleteId String
+  athlete   User    @relation(fields: [athleteId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  text      String
+
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+}

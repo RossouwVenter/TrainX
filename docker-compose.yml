@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: trainx-db
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: trainx
+      POSTGRES_PASSWORD: trainx_dev
+      POSTGRES_DB: trainx
+    volumes:
+      - trainx-pgdata:/var/lib/postgresql/data
+
+volumes:
+  trainx-pgdata:
