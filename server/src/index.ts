@@ -19,7 +19,7 @@ app.get('/health', (_req, res) => {
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`TrainX server running on port ${PORT}`);
+  console.log(`Ventri server running on port ${PORT}`);
 });
 
 export default app;

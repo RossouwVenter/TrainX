@@ -1,4 +1,5 @@
 import { PrismaClient, Discipline, SessionStatus } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -8,12 +9,14 @@ async function main() {
   await prisma.session.deleteMany();
   await prisma.user.deleteMany();
 
+  const hashedPassword = await bcrypt.hash('password1', 10);
+
   // Create coach
   const coach = await prisma.user.create({
     data: {
-      email: 'coach@trainx.com',
-      password: 'password1',
-      name: 'Sarah Miller',
+      email: 'rossouw.venter.rv@gmail.com',
+      password: hashedPassword,
+      name: 'Rossouw Venter',
       role: 'COACH',
     },
   });
@@ -22,24 +25,24 @@ async function main() {
   const athletes = await Promise.all([
     prisma.user.create({
       data: {
-        email: 'athlete1@trainx.com',
-        password: 'password1',
+        email: 'athlete1@ventri.com',
+        password: hashedPassword,
         name: 'James Wilson',
         role: 'ATHLETE',
       },
     }),
     prisma.user.create({
       data: {
-        email: 'athlete2@trainx.com',
-        password: 'password1',
+        email: 'athlete2@ventri.com',
+        password: hashedPassword,
         name: 'Emma Davis',
         role: 'ATHLETE',
       },
     }),
     prisma.user.create({
       data: {
-        email: 'athlete3@trainx.com',
-        password: 'password1',
+        email: 'athlete3@ventri.com',
+        password: hashedPassword,
         name: 'Alex Thompson',
         role: 'ATHLETE',
       },

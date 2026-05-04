@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  FlatList,
+  TextInput,
+  StyleSheet,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../src/context/AuthContext';
@@ -8,8 +19,24 @@ import type { User } from '../src/types';
 
 export default function RolePicker() {
   const router = useRouter();
-  const { selectRole, selectAthlete, athletes, loading, role, currentUser } = useAuth();
+  const {
+    selectRole,
+    selectAthlete,
+    loginAsCoach,
+    signupAsCoach,
+    athletes,
+    loading,
+    role,
+    currentUser,
+    error,
+    clearError,
+  } = useAuth();
   const [showAthletes, setShowAthletes] = useState(false);
+  const [showCoachAuth, setShowCoachAuth] = useState(false);
+  const [isSignup, setIsSignup] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
 
   // If already authenticated, go to tabs
   React.useEffect(() => {
@@ -18,9 +45,17 @@ export default function RolePicker() {
     }
   }, [currentUser, role]);
 
-  const handleCoach = async () => {
-    await selectRole('COACH');
-    router.replace('/(tabs)/schedule');
+  const handleCoachSubmit = async () => {
+    try {
+      if (isSignup) {
+        await signupAsCoach(email, password, name);
+      } else {
+        await loginAsCoach(email, password);
+      }
+      router.replace('/(tabs)/schedule');
+    } catch {
+      // error is set in context
+    }
   };
 
   const handleAthlete = async () => {
@@ -38,6 +73,103 @@ export default function RolePicker() {
       <View style={styles.container}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
+    );
+  }
+
+  // Coach auth form
+  if (showCoachAuth) {
+    return (
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.authScroll} keyboardShouldPersistTaps="handled">
+          <View style={styles.headerSection}>
+            <Pressable
+              onPress={() => {
+                setShowCoachAuth(false);
+                clearError();
+              }}
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.primary} />
+            </Pressable>
+            <Text style={styles.title}>{isSignup ? 'Create Account' : 'Welcome Back'}</Text>
+            <Text style={styles.subtitle}>
+              {isSignup ? 'Sign up as a Coach' : 'Sign in to your Coach account'}
+            </Text>
+          </View>
+
+          <View style={styles.formSection}>
+            {error && (
+              <View style={styles.errorBox}>
+                <Ionicons name="alert-circle" size={18} color={colors.error} />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
+            {isSignup && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Name</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Your full name"
+                  placeholderTextColor={colors.textLight}
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                />
+              </View>
+            )}
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="coach@example.com"
+                placeholderTextColor={colors.textLight}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="••••••••"
+                placeholderTextColor={colors.textLight}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <Pressable
+              onPress={handleCoachSubmit}
+              disabled={loading}
+              style={({ pressed }) => [styles.submitButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.submitText}>{isSignup ? 'Sign Up' : 'Sign In'}</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                setIsSignup(!isSignup);
+                clearError();
+              }}
+              style={styles.toggleLink}
+            >
+              <Text style={styles.toggleText}>
+                {isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 
@@ -81,13 +213,13 @@ export default function RolePicker() {
         <View style={styles.logoCircle}>
           <Ionicons name="fitness" size={48} color={colors.surface} />
         </View>
-        <Text style={styles.heroTitle}>TrainX</Text>
+        <Text style={styles.heroTitle}>Ventri</Text>
         <Text style={styles.heroSubtitle}>Your training companion</Text>
       </View>
       <View style={styles.cardsSection}>
         <Text style={styles.chooseLabel}>I am a...</Text>
         <Pressable
-          onPress={handleCoach}
+          onPress={() => setShowCoachAuth(true)}
           style={({ pressed }) => [styles.roleCard, styles.coachCard, pressed && styles.pressed]}
         >
           <View style={styles.roleIcon}>
@@ -245,5 +377,66 @@ const styles = StyleSheet.create({
   athleteEmail: {
     ...typography.caption,
     color: colors.textLight,
+  },
+  // Coach auth form
+  authScroll: {
+    flexGrow: 1,
+  },
+  formSection: {
+    flex: 1,
+    padding: spacing.lg,
+    paddingTop: spacing.xl,
+  },
+  inputGroup: {
+    marginBottom: spacing.md,
+  },
+  inputLabel: {
+    ...typography.bodySmall,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  input: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    ...typography.body,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  submitButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
+  submitText: {
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.surface,
+  },
+  toggleLink: {
+    alignItems: 'center',
+    marginTop: spacing.lg,
+  },
+  toggleText: {
+    ...typography.bodySmall,
+    color: colors.primary,
+  },
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.error + '15',
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  errorText: {
+    ...typography.bodySmall,
+    color: colors.error,
+    flex: 1,
   },
 });

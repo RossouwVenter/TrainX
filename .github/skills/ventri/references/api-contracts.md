@@ -9,7 +9,7 @@ List all athletes (public, no auth required). Used by the role picker.
 
 **Response 200:**
 ```json
-[{ "id": "...", "name": "James Wilson", "email": "athlete1@trainx.com", "role": "ATHLETE" }]
+[{ "id": "...", "name": "James Wilson", "email": "athlete1@ventri.com", "role": "ATHLETE" }]
 ```
 
 ### GET /auth/coach
@@ -17,7 +17,7 @@ Get the default coach profile (public). Used by the role picker.
 
 **Response 200:**
 ```json
-{ "id": "...", "name": "Sarah Miller", "email": "coach@trainx.com", "role": "COACH" }
+{ "id": "...", "name": "Sarah Miller", "email": "coach@ventri.com", "role": "COACH" }
 ```
 
 ## Sessions
@@ -90,7 +90,7 @@ List all athletes with summary stats. Coach only.
 [{
   "id": "...",
   "name": "James Wilson",
-  "email": "athlete1@trainx.com",
+  "email": "athlete1@ventri.com",
   "sessionsThisWeek": 5,
   "completionRate": 80
 }]

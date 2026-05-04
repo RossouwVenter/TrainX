@@ -1,16 +1,16 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: trainx-db
+    container_name: ventri-db
     restart: unless-stopped
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_USER: trainx
-      POSTGRES_PASSWORD: trainx_dev
-      POSTGRES_DB: trainx
+      POSTGRES_USER: ventri
+      POSTGRES_PASSWORD: ventri_dev
+      POSTGRES_DB: ventri
     volumes:
-      - trainx-pgdata:/var/lib/postgresql/data
+      - ventri-pgdata:/var/lib/postgresql/data
 
 volumes:
-  trainx-pgdata:
+  ventri-pgdata:

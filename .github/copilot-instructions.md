@@ -1,7 +1,7 @@
-# TrainX Workspace Instructions
+# Ventri Workspace Instructions
 
 ## Project Overview
-TrainX is a coach/athlete training platform built with Expo SDK 54 (React Native) and Express + Prisma + PostgreSQL.
+Ventri is a coach/athlete training platform built with Expo SDK 54 (React Native) and Express + Prisma + PostgreSQL.
 
 ## Key Conventions
 

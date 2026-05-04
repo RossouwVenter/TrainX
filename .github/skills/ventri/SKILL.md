@@ -1,14 +1,14 @@
 ---
-name: trainx
-description: "Build the TrainX coaching platform. Use when: creating the training app, building coach/athlete features, implementing weekly programs, session management, athlete feedback, schedule views, or any TrainX development task."
-argument-hint: "Describe what you want to build or change in the TrainX app"
+name: ventri
+description: "Build the Ventri coaching platform. Use when: creating the training app, building coach/athlete features, implementing weekly programs, session management, athlete feedback, schedule views, or any Ventri development task."
+argument-hint: "Describe what you want to build or change in the Ventri app"
 ---
 
-# TrainX — Coach & Athlete Training Platform
+# Ventri — Coach & Athlete Training Platform
 
 ## Overview
 
-TrainX is a modern training management platform where coaches create and upload weekly training programs for individual athletes, and athletes provide structured feedback on completed sessions.
+Ventri is a modern training management platform where coaches create and upload weekly training programs for individual athletes, and athletes provide structured feedback on completed sessions.
 
 ## Tech Stack
 
@@ -23,7 +23,7 @@ TrainX is a modern training management platform where coaches create and upload 
 ## Architecture
 
 ```
-TrainX/
+Ventri/
 ├── server/                  # Express API
 │   ├── prisma/              # Schema + migrations + seed
 │   └── src/
@@ -60,7 +60,7 @@ TrainX/
 
 ## Multi-Agent Workflow
 
-When building or modifying TrainX, delegate to specialized agents:
+When building or modifying Ventri, delegate to specialized agents:
 
 1. **@architect** — Design data models, API contracts, and system architecture decisions
 2. **@backend** — Implement server-side code: routes, controllers, services, Prisma schema, migrations
