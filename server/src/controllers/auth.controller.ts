@@ -10,8 +10,8 @@ const sanitizeUser = (user: { id: string; name: string; email: string; role: str
 
 export async function signup(req: Request, res: Response, next: NextFunction) {
   try {
-    const { email, password, name } = req.body;
-    const user = await authService.signup(email, password, name);
+    const { email, password, name, role } = req.body;
+    const user = await authService.signup(email, password, name, role);
     res.status(201).json(sanitizeUser(user));
   } catch (err) {
     next(err);

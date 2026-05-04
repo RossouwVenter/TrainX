@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Pressable,
-  FlatList,
   TextInput,
   StyleSheet,
   ActivityIndicator,
@@ -15,28 +14,17 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../src/context/AuthContext';
 import { colors, spacing, typography, radius, shadows } from '../src/styles/tokens';
-import type { User } from '../src/types';
+import type { Role } from '../src/types';
 
 export default function RolePicker() {
   const router = useRouter();
-  const {
-    selectRole,
-    selectAthlete,
-    loginAsCoach,
-    signupAsCoach,
-    athletes,
-    loading,
-    role,
-    currentUser,
-    error,
-    clearError,
-  } = useAuth();
-  const [showAthletes, setShowAthletes] = useState(false);
-  const [showCoachAuth, setShowCoachAuth] = useState(false);
+  const { login, signup, loading, role, currentUser, error, clearError } = useAuth();
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // If already authenticated, go to tabs
   React.useEffect(() => {
@@ -45,27 +33,18 @@ export default function RolePicker() {
     }
   }, [currentUser, role]);
 
-  const handleCoachSubmit = async () => {
+  const handleSubmit = async () => {
+    if (!selectedRole) return;
     try {
       if (isSignup) {
-        await signupAsCoach(email, password, name);
+        await signup(email, password, name, selectedRole);
       } else {
-        await loginAsCoach(email, password);
+        await login(email, password);
       }
       router.replace('/(tabs)/schedule');
     } catch {
       // error is set in context
     }
-  };
-
-  const handleAthlete = async () => {
-    await selectRole('ATHLETE');
-    setShowAthletes(true);
-  };
-
-  const handlePickAthlete = (athlete: User) => {
-    selectAthlete(athlete);
-    router.replace('/(tabs)/schedule');
   };
 
   if (loading) {
@@ -76,27 +55,36 @@ export default function RolePicker() {
     );
   }
 
-  // Coach auth form
-  if (showCoachAuth) {
+  // Auth form (for both Coach and Athlete)
+  if (selectedRole) {
+    const isCoach = selectedRole === 'COACH';
+    const accentColor = isCoach ? colors.primary : colors.secondary;
+    const roleLabel = isCoach ? 'Coach' : 'Athlete';
+
     return (
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.authScroll} keyboardShouldPersistTaps="handled">
-          <View style={styles.headerSection}>
+          <View style={[styles.headerSection, { backgroundColor: accentColor }]}>
             <Pressable
               onPress={() => {
-                setShowCoachAuth(false);
+                setSelectedRole(null);
+                setIsSignup(false);
+                setEmail('');
+                setPassword('');
+                setName('');
+                setShowPassword(false);
                 clearError();
               }}
               style={styles.backButton}
             >
-              <Ionicons name="arrow-back" size={24} color={colors.primary} />
+              <Ionicons name="arrow-back" size={24} color={accentColor} />
             </Pressable>
             <Text style={styles.title}>{isSignup ? 'Create Account' : 'Welcome Back'}</Text>
             <Text style={styles.subtitle}>
-              {isSignup ? 'Sign up as a Coach' : 'Sign in to your Coach account'}
+              {isSignup ? `Sign up as ${roleLabel}` : `Sign in as ${roleLabel}`}
             </Text>
           </View>
 
@@ -126,7 +114,7 @@ export default function RolePicker() {
               <Text style={styles.inputLabel}>Email</Text>
               <TextInput
                 style={styles.input}
-                placeholder="coach@example.com"
+                placeholder={isCoach ? 'coach@example.com' : 'athlete@example.com'}
                 placeholderTextColor={colors.textLight}
                 value={email}
                 onChangeText={setEmail}
@@ -138,20 +126,33 @@ export default function RolePicker() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor={colors.textLight}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="••••••••"
+                  placeholderTextColor={colors.textLight}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={22}
+                    color={colors.textLight}
+                  />
+                </Pressable>
+              </View>
             </View>
 
             <Pressable
-              onPress={handleCoachSubmit}
+              onPress={handleSubmit}
               disabled={loading}
-              style={({ pressed }) => [styles.submitButton, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.submitButton,
+                { backgroundColor: accentColor },
+                pressed && styles.pressed,
+              ]}
             >
               <Text style={styles.submitText}>{isSignup ? 'Sign Up' : 'Sign In'}</Text>
             </Pressable>
@@ -163,47 +164,13 @@ export default function RolePicker() {
               }}
               style={styles.toggleLink}
             >
-              <Text style={styles.toggleText}>
+              <Text style={[styles.toggleText, { color: accentColor }]}>
                 {isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
               </Text>
             </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    );
-  }
-
-  if (showAthletes && athletes.length > 0) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.headerSection}>
-          <Pressable onPress={() => setShowAthletes(false)} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.primary} />
-          </Pressable>
-          <Text style={styles.title}>Select Athlete</Text>
-          <Text style={styles.subtitle}>Choose your profile</Text>
-        </View>
-        <FlatList
-          data={athletes}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => handlePickAthlete(item)}
-              style={({ pressed }) => [styles.athleteItem, pressed && styles.pressed]}
-            >
-              <View style={styles.athleteAvatar}>
-                <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
-              </View>
-              <View style={styles.athleteInfo}>
-                <Text style={styles.athleteName}>{item.name}</Text>
-                <Text style={styles.athleteEmail}>{item.email}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
-            </Pressable>
-          )}
-        />
-      </View>
     );
   }
 
@@ -219,7 +186,7 @@ export default function RolePicker() {
       <View style={styles.cardsSection}>
         <Text style={styles.chooseLabel}>I am a...</Text>
         <Pressable
-          onPress={() => setShowCoachAuth(true)}
+          onPress={() => setSelectedRole('COACH')}
           style={({ pressed }) => [styles.roleCard, styles.coachCard, pressed && styles.pressed]}
         >
           <View style={styles.roleIcon}>
@@ -229,7 +196,7 @@ export default function RolePicker() {
           <Text style={styles.roleDesc}>Create programs & manage athletes</Text>
         </Pressable>
         <Pressable
-          onPress={handleAthlete}
+          onPress={() => setSelectedRole('ATHLETE')}
           style={({ pressed }) => [styles.roleCard, styles.athleteCard, pressed && styles.pressed]}
         >
           <View style={[styles.roleIcon, { backgroundColor: colors.secondary + '15' }]}>
@@ -316,7 +283,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
   },
-  // Athlete picker
+  // Auth form
   headerSection: {
     paddingTop: 60,
     paddingBottom: spacing.lg,
@@ -343,42 +310,7 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: 'rgba(255,255,255,0.7)',
   },
-  list: {
-    padding: spacing.md,
-  },
-  athleteItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    ...shadows.sm,
-  },
-  athleteAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
-  },
-  avatarText: {
-    ...typography.h3,
-    color: colors.primary,
-  },
-  athleteInfo: { flex: 1 },
-  athleteName: {
-    ...typography.body,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  athleteEmail: {
-    ...typography.caption,
-    color: colors.textLight,
-  },
-  // Coach auth form
+  // Auth form
   authScroll: {
     flexGrow: 1,
   },
@@ -404,6 +336,23 @@ const styles = StyleSheet.create({
     color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: spacing.md,
+    ...typography.body,
+    color: colors.text,
+  },
+  eyeButton: {
+    padding: spacing.md,
   },
   submitButton: {
     backgroundColor: colors.primary,

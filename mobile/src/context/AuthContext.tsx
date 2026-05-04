@@ -1,18 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, Role } from '../types';
 import { getItem, setItem, deleteItem } from '../utils/storage';
-import { getAthletes as fetchAthleteList, loginCoach, signupCoach } from '../services/auth.service';
+import { loginUser, signupUser } from '../services/auth.service';
 
 interface AuthContextType {
   currentUser: User | null;
   role: Role | null;
-  athletes: User[];
   loading: boolean;
   error: string | null;
-  loginAsCoach: (email: string, password: string) => Promise<void>;
-  signupAsCoach: (email: string, password: string, name: string) => Promise<void>;
-  selectRole: (role: Role) => Promise<void>;
-  selectAthlete: (user: User) => void;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, role: Role) => Promise<void>;
   switchRole: () => void;
   clearError: () => void;
 }
@@ -22,7 +19,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [role, setRole] = useState<Role | null>(null);
-  const [athletes, setAthletes] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,15 +35,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const clearError = useCallback(() => setError(null), []);
 
-  const loginAsCoach = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
     setError(null);
     try {
-      const coach = await loginCoach(email, password);
-      setCurrentUser(coach);
-      setRole('COACH');
-      await setItem('ventri_role', 'COACH');
-      await setItem('ventri_user', JSON.stringify(coach));
+      const user = await loginUser(email, password);
+      setCurrentUser(user);
+      setRole(user.role);
+      await setItem('ventri_role', user.role);
+      await setItem('ventri_user', JSON.stringify(user));
     } catch (err: any) {
       const message = err?.response?.data?.error || err?.message || 'Login failed';
       setError(message);
@@ -57,15 +53,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signupAsCoach = useCallback(async (email: string, password: string, name: string) => {
+  const signup = useCallback(async (email: string, password: string, name: string, selectedRole: Role) => {
     setLoading(true);
     setError(null);
     try {
-      const coach = await signupCoach(email, password, name);
-      setCurrentUser(coach);
-      setRole('COACH');
-      await setItem('ventri_role', 'COACH');
-      await setItem('ventri_user', JSON.stringify(coach));
+      const user = await signupUser(email, password, name, selectedRole);
+      setCurrentUser(user);
+      setRole(user.role);
+      await setItem('ventri_role', user.role);
+      await setItem('ventri_user', JSON.stringify(user));
     } catch (err: any) {
       const message = err?.response?.data?.error || err?.message || 'Signup failed';
       setError(message);
@@ -75,30 +71,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const selectRole = useCallback(async (selectedRole: Role) => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (selectedRole === 'ATHLETE') {
-        const list = await fetchAthleteList();
-        setAthletes(list);
-        setRole('ATHLETE');
-        await setItem('ventri_role', 'ATHLETE');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const selectAthlete = useCallback(async (user: User) => {
-    setCurrentUser(user);
-    await setItem('ventri_user', JSON.stringify(user));
-  }, []);
-
   const switchRole = useCallback(async () => {
     setCurrentUser(null);
     setRole(null);
-    setAthletes([]);
     setError(null);
     await deleteItem('ventri_role');
     await deleteItem('ventri_user');
@@ -109,13 +84,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         currentUser,
         role,
-        athletes,
         loading,
         error,
-        loginAsCoach,
-        signupAsCoach,
-        selectRole,
-        selectAthlete,
+        login,
+        signup,
         switchRole,
         clearError,
       }}

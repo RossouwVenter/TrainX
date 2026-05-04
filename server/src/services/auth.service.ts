@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 const SALT_ROUNDS = 10;
 
-export async function signup(email: string, password: string, name: string) {
+export async function signup(email: string, password: string, name: string, role: 'COACH' | 'ATHLETE') {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     const err = new Error('Email already in use') as Error & { statusCode: number };
@@ -20,7 +20,7 @@ export async function signup(email: string, password: string, name: string) {
       email,
       password: hashedPassword,
       name,
-      role: 'COACH',
+      role,
     },
   });
 }
