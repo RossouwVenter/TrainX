@@ -18,8 +18,10 @@ app.get('/health', (_req, res) => {
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Ventri server running on port ${PORT}`);
-});
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`Ventri server running on port ${PORT}`);
+  });
+}
 
 export default app;
