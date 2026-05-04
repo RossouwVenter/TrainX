@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useAuth } from '../../src/context/AuthContext';
 import { useWeekSchedule } from '../../src/hooks/useWeekSchedule';
 import { WeekSelector } from '../../src/components/WeekSelector';
 import { WeekTotals } from '../../src/components/WeekTotals';
 import { DaySection } from '../../src/components/DaySection';
 import { EmptyState } from '../../src/components/EmptyState';
 import { LoadingSpinner } from '../../src/components/LoadingSpinner';
+import { FAB } from '../../src/components/FAB';
 import { getWeekStart, addWeeks, toISODate } from '../../src/utils/date';
 import { colors, spacing, typography, radius, shadows } from '../../src/styles/tokens';
 import api from '../../src/services/api';
@@ -16,6 +18,8 @@ import type { User } from '../../src/types';
 export default function AthleteDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { role } = useAuth();
 
   const [athlete, setAthlete] = useState<User | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -67,6 +71,18 @@ export default function AthleteDetailScreen() {
           <EmptyState message="Failed to load schedule" icon="alert-circle-outline" />
         )}
       </ScrollView>
+
+      {role === 'COACH' && (
+        <FAB
+          icon="add"
+          onPress={() =>
+            router.push({
+              pathname: '/session/create',
+              params: { athleteId: id, weekOf },
+            })
+          }
+        />
+      )}
     </View>
   );
 }
